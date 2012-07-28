@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CraftyA</title>
+  <%= stylesheet_link_tag    "application", :media => "all" %>
+  <%= javascript_include_tag "application" %>
+  <%= csrf_meta_tags %>
+  <style>
+  body, html { margin:0; padding: 0; overflow:hidden; font-family:Arial; font-size:20px }
+  #cr-stage { border:2px solid black; margin:5px auto; color:white }
+  </style>
+</head>
+<body>
+
+<%= yield %>
+
+</body>
+</html>
