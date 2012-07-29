@@ -1,6 +1,44 @@
-map = {}
-//method to randomy generate the map
-map.renderMap = function() {
+window.onload = function() {
+	//start crafty
+	Crafty.init(400, 320);
+	Crafty.canvas.init();
+	//scenes: preloader and main
+	scenes.main.create_and_preload();
+};
+
+sprites = {
+	sheets: {
+		main: "/assets/sprite.png",
+		mine: "/assets/mine1.png"
+	},
+	create: function() {
+		//turn the sprite map into usable components
+		Crafty.sprite(16, this.sheets.main, {
+			grass1: [0,0],
+			grass2: [1,0],
+			grass3: [2,0],
+			grass4: [3,0],
+			flower: [0,1],
+			bush1: [0,2],
+			bush2: [1,2],
+			player: [0,3]
+		});
+		Crafty.sprite(24, this.sheets.mine, {
+			boy: [0,0]
+		});
+		//
+	},
+	load_callback: function(fn_callback) {
+		this.create();
+		var sheets_to_load = [this.sheets.main, this.sheets.mine];
+		Crafty.load(sheets_to_load, fn_callback);
+	}
+}
+
+maps = {
+	main: {
+		//method to randomy generate the map
+		renderMap:  function() {
 									//generate the grass along the x-axis
 									for(var i = 0; i < 25; i++) {
 										//generate the grass along the y-axis
@@ -43,118 +81,124 @@ map.renderMap = function() {
 									}
 
 								}
+	}
+}
 
-window.onload = function() {
-	//start crafty
-	Crafty.init(400, 320);
-	//Crafty.canvas.init();
+scenes = {
+	main: {
+		_create: function() {
 
- SPRITE_PATH = "/assets/sprite.png";
- MY_SPRITE_PATH = "/assets/mine1.png";
+			Crafty.scene("main", function() {
+				maps.main.renderMap();
+				controls.hero.create();
 
-	//turn the sprite map into usable components
-	Crafty.sprite(16, SPRITE_PATH, {
-		grass1: [0,0],
-		grass2: [1,0],
-		grass3: [2,0],
-		grass4: [3,0],
-		flower: [0,1],
-		bush1: [0,2],
-		bush2: [1,2],
-		player: [0,3]
-	});
-	Crafty.sprite(24, MY_SPRITE_PATH, {
-		boy: [0,0]
-	});
-
-
-	//the loading screen that will display while our assets load
-	Crafty.scene("loading", function() {
-		//load takes an array of assets and a callback when complete
-		Crafty.load([SPRITE_PATH, MY_SPRITE_PATH], function () {
+				//create our player entity with some premade components
+				player = Crafty.e("2D, Canvas, boy, Hero, Animate, Collision")
+					.attr({x: 160, y: 144, z: 1})
+					.setSpeed(2);
+			});
+			
+		},
+		_load: function() {
 			Crafty.scene("main"); //when everything is loaded, run the main scene
-		});
+		},
+		create_and_preload: function() {
 
-		//black background with some loading text
-		Crafty.background("#000");
-		Crafty.e("2D, DOM, Text").attr({w: 100, h: 20, x: 150, y: 120})
-			.text("Loading")
-			.css({"text-align": "center"});
+			this._create();
+			scenes.loading.create_load_callback( this._load );
 
-		Crafty.e("2D, DOM, Text, Persist").attr({w: 200, h: 20, x: 16, y: 16})
-			.text("MY GAME NAME")
-			.css({"text-align": "center"});
-			//.addComponent('Persist')
-	});
+		}
+	},
+	loading: {
+		create_load_callback: function(fn_callback) {
+			
+			//the loading screen that will display while our assets load
+			Crafty.scene("loading", function() {
+				//load takes an array of assets and a callback when complete
 
-	//automatically play the loading scene
-	Crafty.scene("loading");
+				sprites.load_callback(fn_callback);
+				//black background with some loading text
+				Crafty.background("#000");
+				Crafty.e("2D, DOM, Text")
+				  .attr({w: 100, h: 20, x: 150, y: 120})
+					.text("Loading...")
+					.css({"text-align": "center"});
 
-	Crafty.scene("main", function() {
-		map.renderMap();
+				Crafty.e("2D, DOM, Text, Persist")
+				  .attr({w: 200, h: 20, x: 16, y: 16})
+					.text("MY GAME NAME")
+					.css({"text-align": "center"});
+					//.addComponent('Persist')
+			});
+			//automatically play the loading scene
+			Crafty.scene("loading");
+		}
+	}
+}
 
-		Crafty.c('Hero', {
-			init: function() {
-					//setup animations
-					this.requires("SpriteAnimation, Collision")
-					/*
-					.animate("walk_down",  0, 3, 2)
-					.animate("walk_up",    3, 3, 5)
-					.animate("walk_left",  6, 3, 8)
-					.animate("walk_right", 9, 3, 11)
-					*/
-					.animate("walk_down",  0, 0, 2)
-					.animate("walk_up",    0, 1, 2)
-					.animate("walk_left",  0, 2, 2)
-					.animate("walk_right", 0, 3, 2)
-					//change direction when a direction change event is received
-					.bind("NewDirection",
-						function (direction) {
-							if (direction.x < 0) {
-								if (!this.isPlaying("walk_left"))
-									this.stop().animate("walk_left",  8, -1);
+controls = {
+	hero: {
+		create: function() {
+
+			Crafty.c("MyMoveControls", {
+
+				init: function() {
+					this.requires('Multiway');
+				},
+				setSpeed: function(speed) {
+					this.multiway(speed, {UP_ARROW: -90, DOWN_ARROW: 90, RIGHT_ARROW: 0, LEFT_ARROW: 180})
+					return this;
+				}
+
+			});
+
+			Crafty.c('Hero', {
+				init: function() {
+						//setup animations
+						this.requires("SpriteAnimation, Collision, MyMoveControls")
+						/*
+						.animate("walk_down",  0, 3, 2)
+						.animate("walk_up",    3, 3, 5)
+						.animate("walk_left",  6, 3, 8)
+						.animate("walk_right", 9, 3, 11)
+						*/
+						.animate("walk_down",  0, 0, 2)
+						.animate("walk_up",    0, 1, 2)
+						.animate("walk_left",  0, 2, 2)
+						.animate("walk_right", 0, 3, 2)
+						//change direction when a direction change event is received
+						.bind("NewDirection",
+							function (direction) {
+								if (direction.x < 0) {
+									if (!this.isPlaying("walk_left"))
+										this.stop().animate("walk_left",  8, -1);
+								}
+								if (direction.x > 0) {
+									if (!this.isPlaying("walk_right"))
+										this.stop().animate("walk_right", 8, -1);
+								}
+								if (direction.y < 0) {
+									if (!this.isPlaying("walk_up"))
+										this.stop().animate("walk_up",    8, -1);
+								}
+								if (direction.y > 0) {
+									if (!this.isPlaying("walk_down"))
+										this.stop().animate("walk_down",  8, -1);
+								}
+								if(!direction.x && !direction.y) {
+									this.stop();
+								}
+						})
+						// A rudimentary way to prevent the user from passing solid areas
+						.bind('Moved', function(from) {
+							if(this.hit('solid')){
+								this.attr({x: from.x, y:from.y});
 							}
-							if (direction.x > 0) {
-								if (!this.isPlaying("walk_right"))
-									this.stop().animate("walk_right", 8, -1);
-							}
-							if (direction.y < 0) {
-								if (!this.isPlaying("walk_up"))
-									this.stop().animate("walk_up",    8, -1);
-							}
-							if (direction.y > 0) {
-								if (!this.isPlaying("walk_down"))
-									this.stop().animate("walk_down",  8, -1);
-							}
-							if(!direction.x && !direction.y) {
-								this.stop();
-							}
-					})
-					// A rudimentary way to prevent the user from passing solid areas
-					.bind('Moved', function(from) {
-						if(this.hit('solid')){
-							this.attr({x: from.x, y:from.y});
-						}
-					});
-				return this;
-			}
-		});
+						});
+					return this;
+				}
+			});
 
-		Crafty.c("RightControls", {
-			init: function() {
-				this.requires('Multiway');
-			},
-
-			rightControls: function(speed) {
-				this.multiway(speed, {UP_ARROW: -90, DOWN_ARROW: 90, RIGHT_ARROW: 0, LEFT_ARROW: 180})
-				return this;
-			}
-
-		});
-
-		//create our player entity with some premade components
-		player = Crafty.e("2D, Canvas, boy, RightControls, Hero, Animate, Collision")
-			.attr({x: 160, y: 144, z: 1})
-			.rightControls(2);
-	});
-};
+		}
+	}
+}

@@ -1,0 +1,74 @@
+Crafty("mycomponent")           single selector
+Crafty("hello 2D component")    selector and
+Crafty("hello, 2D, component")  selector or
+
+
+
+
+
+//defines a control
+Crafty.c("MyMoveControls", {
+          init: function() {
+            this.requires('Multiway');
+          }
+        });
+
+
+//adds a control to another control (private internal approach)
+Crafty.c('Hero', {
+  init: function() {
+      //setup animations
+      this.requires("SpriteAnimation, Collision, MyMoveControls")
+
+
+
+//creates an element
+Crafty.e("2D, DOM, Text")
+  //these are all component names,
+  //they are like classes in css, can be used to add behavior,
+  //or just as selectors so you don't need to create and track a ton of vars
+
+
+
+
+//adds a component publicly, on creating phase
+Crafty.e("2D, DOM, Text, Persist")
+  .attr({w: 200, h: 20, x: 16, y: 16})
+  .text("MY GAME NAME")
+  .css({"text-align": "center"});
+  //.addComponent('Persist')
+
+
+//adds a component publicly, appended after creating phase
+Crafty.e("2D, DOM, Text, Persist")
+  .attr({w: 200, h: 20, x: 16, y: 16})
+  .text("MY GAME NAME")
+  .css({"text-align": "center"})
+  .addComponent('Persist');
+
+
+
+
+//sprites
+
+
+Crafty.sprite(
+    16, //width, seems to only accept squared sprites
+    '/images/sprite1.png', //path
+    {
+      grass1: [0,0], //component_name: [0*16, 0*16]
+      grass2: [1,0], //yes, this name will add a component name :)
+      grass3: [2,0]
+    }
+  )
+
+
+
+
+
+//defines a scene
+Crafty.scene("loading", function() {} );
+//loads a scene
+Crafty.scene("loading");
+
+
