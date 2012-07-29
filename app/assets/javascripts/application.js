@@ -12,6 +12,6 @@
 //
 //= require jquery
 //= require jquery_ujs
-//= require crafty042
+//= require crafty049
 //= require game
 //= require_tree .
