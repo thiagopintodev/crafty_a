@@ -39,16 +39,23 @@ maps = {
 	main: {
 		//method to randomy generate the map
 		renderMap:  function() {
+									map = {};
+									map.x = 25;
+									map.y = 16;
+									map.tile = 16;
+									map.w = map.x * map.tile;
+									map.h = map.y * map.tile;
+
 									//generate the grass along the x-axis
-									for(var i = 0; i < 25; i++) {
+									for(var i = 0; i < map.x; i++) {
 										//generate the grass along the y-axis
-										for(var j = 0; j < 20; j++) {
+										for(var j = 0; j < map.y; j++) {
 											grassType = Crafty.math.randomInt(1, 4);
 											Crafty.e("2D, Canvas, grass"+grassType)
 												.attr({x: i * 16, y: j * 16});
 
 											//1/50 chance of drawing a flower and only within the bushes
-											if(i > 0 && i < 24 && j > 0 && j < 19 && Crafty.math.randomInt(0, 50) > 49) {
+											if(i > 0 && i < map.x-1 && j > 0 && j < map.y-1 && Crafty.math.randomInt(0, 50) > 48) {
 												Crafty.e("2D, DOM, flower")
 													.attr({x: i * 16, y: j * 16})
 													//.addComponent('SpriteAnimation')
@@ -59,20 +66,20 @@ maps = {
 									}
 
 									//create the bushes along the x-axis which will form the boundaries
-									for(var i = 0; i < 25; i++) {
+									for(var i = 0; i < map.x; i++) {
 										Crafty.e("2D, Canvas, wall_top, solid, bush"+Crafty.math.randomInt(1,2))
 											.attr({x: i * 16, y: 0, z: 2});
 										Crafty.e("2D, DOM, wall_bottom, solid, bush"+Crafty.math.randomInt(1,2))
-											.attr({x: i * 16, y: 304, z: 2});
+											.attr({x: i * 16, y: map.h-16, z: 2});
 									}
 
 									//create the bushes along the y-axis
 									//we need to start one more and one less to not overlap the previous bushes
-									for(var i = 1; i < 19; i++) {
+									for(var i = 1; i < map.y; i++) {
 										Crafty.e("2D, DOM, wall_left, solid, bush"+Crafty.math.randomInt(1,2))
 											.attr({x: 0, y: i * 16, z: 2});
 										Crafty.e("2D, Canvas, wall_right, solid, bush"+Crafty.math.randomInt(1,2))
-											.attr({x: 384, y: i * 16, z: 2});
+											.attr({x: map.w-16, y: i * 16, z: 2});
 									}
 
 								}
@@ -130,9 +137,9 @@ scenes = {
 					.text("Loading...")
 					.css({"text-align": "center"});
 
-				Crafty.e("2D, DOM, Text, Persist")
-				  .attr({w: 200, h: 20, x: 16, y: 16})
-					.text("MY GAME NAME")
+				msg1 = Crafty.e("2D, DOM, Text, Persist")
+				  .attr({w: 400, h: 20, x: 0, y: 270})
+					.text("go to a stone and press X")
 					.css({"text-align": "center"});
 					//.addComponent('Persist')
 			});
@@ -178,25 +185,25 @@ controls = {
 						.bind("NewDirection",
 							function (direction) {
 
+								this.stop();
 								if (direction.x < 0) {
 									if (!this.isPlaying("walking_left"))
-										this.stop().animate("walking_left",  8, -1);
+										this.animate("walking_left",  8, -1);
 								}
 								if (direction.x > 0) {
 									if (!this.isPlaying("walking_right"))
-										this.stop().animate("walking_right", 8, -1);
+										this.animate("walking_right", 8, -1);
 								}
 								if (direction.y < 0) {
 									if (!this.isPlaying("walking_up"))
-										this.stop().animate("walking_up",    8, -1);
+										this.animate("walking_up",    8, -1);
 								}
 								if (direction.y > 0) {
 									if (!this.isPlaying("walking_down"))
-										this.stop().animate("walking_down",  8, -1);
+										this.animate("walking_down",  8, -1);
 								}
-								if(!direction.x && !direction.y) {
-									this.stop();
-								}
+								//if(!direction.x && !direction.y) {
+								//}
 
 							}
 						)
@@ -220,7 +227,7 @@ controls = {
 						.bind('KeyUp', function (e) {
 
 							if (e.key == Crafty.keys.X && player.last_touched_obj) {
-								alert( player.last_touched_obj.msg   );
+								ialert(player.last_touched_obj.msg);
 							}
 						})
 					return this;
@@ -229,4 +236,7 @@ controls = {
 
 		}
 	}
+}
+function ialert(msg) {
+	msg1.text(msg);
 }
