@@ -21,10 +21,10 @@ sprites = {
 			flower: [0,1],
 			bush1: [0,2],
 			bush2: [1,2],
-			player: [0,3]
+			s_Player: [0,3]
 		});
 		Crafty.sprite(24, this.sheets.mine, {
-			boy: [0,0]
+			s_Boy: [0,0]
 		});
 		//
 	},
@@ -50,15 +50,10 @@ maps = {
 											//1/50 chance of drawing a flower and only within the bushes
 											if(i > 0 && i < 24 && j > 0 && j < 19 && Crafty.math.randomInt(0, 50) > 49) {
 												Crafty.e("2D, DOM, flower")
-													.attr({x: i * 16, y: j * 16});
+													.attr({x: i * 16, y: j * 16})
 													//.addComponent('SpriteAnimation')
 													//.animate("wind", 0, 1, 2);
 													//.animate("wind", 15, -1);
-											}
-											//1/50 chance of drawing a bush and only within the bushes
-											if(i > 0 && i < 24 && j > 0 && j < 19 && Crafty.math.randomInt(0, 50) > 45) {
-												Crafty.e("2D, Canvas, wall_top, solid, bush"+Crafty.math.randomInt(1,2))
-													.attr({x: i * 16, y: j * 16});
 											}
 										}
 									}
@@ -93,9 +88,20 @@ scenes = {
 				controls.hero.create();
 
 				//create our player entity with some premade components
-				player = Crafty.e("2D, Canvas, boy, Hero, Animate, Collision")
+				player = Crafty.e("2D, Canvas")
 					.attr({x: 160, y: 144, z: 1})
-					.setSpeed(2);
+					.addComponent('HeroBoy')
+					//.setSpeed(1);
+
+				sign = Crafty.e("2D, Canvas, wall_top, solid, Talkable, bush"+Crafty.math.randomInt(1,2))
+						.attr({x: 168, y: 200})
+						.attr({msg: 'I love you'});
+				sign = Crafty.e("2D, Canvas, wall_top, solid, Talkable, bush"+Crafty.math.randomInt(1,2))
+						.attr({x: 200, y: 200})
+						.attr({msg: 'I hate you'});
+				sign = Crafty.e("2D, Canvas, wall_top, solid, Talkable, bush"+Crafty.math.randomInt(1,2))
+						.attr({x: 232, y: 200})
+						.attr({msg: 'who?'});
 			});
 			
 		},
@@ -140,61 +146,83 @@ controls = {
 	hero: {
 		create: function() {
 
-			Crafty.c("MyMoveControls", {
-
+			Crafty.c('HeroBoy', {
 				init: function() {
-					this.requires('Multiway');
-				},
-				setSpeed: function(speed) {
-					this.multiway(speed, {UP_ARROW: -90, DOWN_ARROW: 90, RIGHT_ARROW: 0, LEFT_ARROW: 180})
-					return this;
+						this.requires("_Hero, s_Boy")
+								.animate("walking_down",  0, 0, 2)
+								.animate("walking_up",    0, 1, 2)
+								.animate("walking_left",  0, 2, 2)
+								.animate("walking_right", 0, 3, 2);
 				}
-
+			});
+			Crafty.c('HeroPlayer', {
+				init: function() {
+						this.requires("_Hero, s_Player")
+								.animate("walking_down",  0, 3, 2)
+								.animate("walking_up",    3, 3, 5)
+								.animate("walking_left",  6, 3, 8)
+								.animate("walking_right", 9, 3, 11);
+				}
 			});
 
-			Crafty.c('Hero', {
+			Crafty.c('_Hero', {
 				init: function() {
+
+						var speed  = 1;
+						var keyBindings = {UP_ARROW: 270, DOWN_ARROW: 90, RIGHT_ARROW: 0, LEFT_ARROW: 180};
+
 						//setup animations
-						this.requires("SpriteAnimation, Collision, MyMoveControls")
-						/*
-						.animate("walk_down",  0, 3, 2)
-						.animate("walk_up",    3, 3, 5)
-						.animate("walk_left",  6, 3, 8)
-						.animate("walk_right", 9, 3, 11)
-						*/
-						.animate("walk_down",  0, 0, 2)
-						.animate("walk_up",    0, 1, 2)
-						.animate("walk_left",  0, 2, 2)
-						.animate("walk_right", 0, 3, 2)
+						this.requires("SpriteAnimation, Collision, Multiway, Keyboard")
 						//change direction when a direction change event is received
+						.multiway(speed, keyBindings)
 						.bind("NewDirection",
 							function (direction) {
+
 								if (direction.x < 0) {
-									if (!this.isPlaying("walk_left"))
-										this.stop().animate("walk_left",  8, -1);
+									if (!this.isPlaying("walking_left"))
+										this.stop().animate("walking_left",  8, -1);
 								}
 								if (direction.x > 0) {
-									if (!this.isPlaying("walk_right"))
-										this.stop().animate("walk_right", 8, -1);
+									if (!this.isPlaying("walking_right"))
+										this.stop().animate("walking_right", 8, -1);
 								}
 								if (direction.y < 0) {
-									if (!this.isPlaying("walk_up"))
-										this.stop().animate("walk_up",    8, -1);
+									if (!this.isPlaying("walking_up"))
+										this.stop().animate("walking_up",    8, -1);
 								}
 								if (direction.y > 0) {
-									if (!this.isPlaying("walk_down"))
-										this.stop().animate("walk_down",  8, -1);
+									if (!this.isPlaying("walking_down"))
+										this.stop().animate("walking_down",  8, -1);
 								}
 								if(!direction.x && !direction.y) {
 									this.stop();
 								}
-						})
+
+							}
+						)
 						// A rudimentary way to prevent the user from passing solid areas
 						.bind('Moved', function(from) {
+
+							if(this.hit('Talkable')){
+								player.last_touched_obj = this.hit('Talkable')[0].obj;
+							} else if (player.foo) {
+								player.foo = false;
+							} else {
+								player.last_touched_obj = false;
+							}
+
 							if(this.hit('solid')){
 								this.attr({x: from.x, y:from.y});
+								player.foo = true;
 							}
-						});
+						})
+						//keyboard
+						.bind('KeyUp', function (e) {
+
+							if (e.key == Crafty.keys.X && player.last_touched_obj) {
+								alert( player.last_touched_obj.msg   );
+							}
+						})
 					return this;
 				}
 			});
